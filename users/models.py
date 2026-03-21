@@ -32,7 +32,7 @@ class StudentProfile(models.Model):
     # Academic Data
     student_id = models.CharField(max_length=20, unique=True)
     course = models.CharField(max_length=100)
-    # fee_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    fee_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     # Approval logic
     is_approved = models.BooleanField(default=False)
@@ -46,4 +46,4 @@ class StudentProfile(models.Model):
     )
 
     def __str__(self):
-        return f"{self.student_id} - {self.user.get_full_name}"
+        return f"{self.student_id} - {self.user.get_full_name()}"
