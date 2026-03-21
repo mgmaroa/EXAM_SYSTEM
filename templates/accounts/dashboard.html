@@ -21,4 +21,14 @@
     <p><strong>Course:</strong> {{ student_profile.course }}</p>
     <p><strong>Fee Balance: </strong><strong>{{ student_profile.fee_balance }}</strong></p>
 
+    {% if student_profile.is_approved %}
+        <div style="color: green;">
+            Status: Approved by {{ student_profile.approved_by.username }} on {{ student_profile.date_approved }}
+        </div>
+    {% else %}
+        <div style="color: red;">
+                Status: Incomplete Payment. Student must pay {{ student_id.fee_balance }} before approval.
+        </div>
+    {% endif %}
+
 {% endif %}
