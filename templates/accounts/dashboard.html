@@ -1,0 +1,24 @@
+<h2>Accounts Approval Portal</h2>
+
+<form action="" method="post">
+    {% csrf_token %}
+    {{ search_form.as_p }}
+    <button type="submit">Search Student</button>
+</form>
+
+{% if messages %}
+    {% for message in messages %}
+        <p style="color: red;">{{ message }}</p>
+    {% endfor %}
+{% endif %}
+
+{% if student_profile %}
+    <hr>
+    <h3>Student Details</h3>
+
+    <p><strong>ID:</strong> {{ student_profile.student_id }}</p>
+    <p><strong>Name:</strong> {{ student_profile.user.get_full_name }}</p>
+    <p><strong>Course:</strong> {{ student_profile.course }}</p>
+    <p><strong>Fee Balance: </strong><strong>{{ student_profile.fee_balance }}</strong></p>
+
+{% endif %}
