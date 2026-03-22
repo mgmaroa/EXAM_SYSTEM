@@ -121,4 +121,11 @@ STATIC_URL = 'static/'
 # Register custom User model
 AUTH_USER_MODEL = 'users.User'
 
-LOGIN_REDIRECT_URL = '/dashboard/'
+# After login, go to the URL name 'dashboard_redirect'
+LOGIN_REDIRECT_URL = 'dashboard_redirect'
+
+# If a user tries to access a protected page without logging in, send them to root
+LOGIN_URL = 'login'
+
+# Where to go after logging out
+LOGOUT_REDIRECT_URL = 'login'
