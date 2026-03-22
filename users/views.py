@@ -18,7 +18,7 @@ def dashboard_redirect(request):
     user = request.user
 
     if user.role == 'ICT':
-        return redirect('ict_dashboard')
+        return redirect('admin:index')
     elif user.role == 'ACCOUNTS':
         return redirect('accounts_dashboard')
     elif user.role == 'REGISTRAR':
