@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.contrib import messages
 from django.utils import timezone
+from django.template.loader import get_template
+from reportlab.pdfgen import canvas
 from .permissions import role_required
 from .models import StudentProfile
 from .forms import StudentSearchForm, FeeUpdateForm
@@ -112,10 +114,48 @@ def approve_student(request, student_id):
     messages.success(request, "Student approved successfully")
     return redirect('accounts_dashboard')
 
-@role_required(['REGISTRAR'])
+
 @login_required
+@role_required(['REGISTRAR'])
 def registrar_dashboard(request):
-    return HttpResponse("Registrar Dashboard")
+    # Fetch only students approved by Accounts
+    approved_students = StudentProfile.objects.filter(is_approved=True).order_by('student_id')
+
+    return render(request, 'registrar/dashboard.html', {
+        'approved_students': approved_students
+    })
+
+
+@login_required
+@role_required(['REGISTRAR'])
+def generate_exam_card(request, student_id):
+    student = get_object_or_404(StudentProfile, student_id=student_id)
+
+    if not student.is_approved:
+        return HttpResponse("Student not approved", status=403)
+    
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="exam_card_{student.student_id}.pdf"'
+
+    p = canvas.Canvas(response)
+
+    # Content
+    p.setFont("Helvetica", 14)
+    p.drawString(100, 800, "KIMC EXAMINATION CARD")
+
+    p.setFont("Helvetica", 12)
+    p.drawString(100, 750, f"Student ID: {student.student_id}")
+    p.drawString(100, 730, f"Name: {student.user.get_full_name()}")
+    p.drawString(100, 710, f"Course: {student.course}")
+
+    p.drawString(100, 670, "Status: APPROVED")
+
+    p.drawString(100, 630, "Signature: __________________")
+
+    p.showPage()
+    p.save()
+
+    return response
 
 @role_required(['STUDENT'])
 @login_required
