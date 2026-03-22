@@ -12,6 +12,8 @@ class StudentSearchForm(forms.Form):
             }
         )
     )
+
+
 # Form for updating Student data
 class FeeUpdateForm(forms.ModelForm):
     class Meta:
