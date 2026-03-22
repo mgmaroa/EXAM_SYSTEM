@@ -1,11 +1,11 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.contrib import messages
 from django.utils import timezone
 from .permissions import role_required
 from .models import StudentProfile
-from .forms import StudentSearchForm
+from .forms import StudentSearchForm, FeeUpdateForm
 
 # Assuming 0.00 is the requirement, or adjust to your "Minimum Requirement"
 MINIMUM_BALANCE_THRESHOLD = 10000
@@ -33,24 +33,84 @@ def ict_dashboard(request):
 @login_required
 def accounts_dashboard(request):
     search_form = StudentSearchForm() # Handles the get request i.e display form
+    fee_form = None    
     student_profile = None
 
     if request.method == 'POST':
-        search_form = StudentSearchForm(request.POST)
 
-        if search_form.is_valid():
-            student_id = search_form.cleaned_data['student_id']
+        # SEARCH FORM
+        if 'search_student' in request.POST:
+            search_form = StudentSearchForm(request.POST)
 
-            try:
-                student_profile = StudentProfile.objects.get(student_id=student_id)
-            except StudentProfile.DoesNotExist:
-                messages.error(request, "Student ID not found.")
-    
+            if search_form.is_valid():
+                student_id = search_form.cleaned_data['student_id']
+
+                try:
+                    student_profile = StudentProfile.objects.get(student_id=student_id)
+
+                    # Only allow editing if not approved
+                    if not student_profile.is_approved:
+                        fee_form = FeeUpdateForm(instance=student_profile)
+
+                except StudentProfile.DoesNotExist:
+                    messages.error(request, "Student not found.")
+
+        # UPDATE FEE FORM
+        elif 'update_fee' in request.POST:
+            student_id = request.POST.get('student_id')
+            student_profile = get_object_or_404(StudentProfile, student_id=student_id)
+
+            if student_profile.is_approved:
+                messages.warning(request, "Cannot update. Student already approved")
+            else:
+                fee_form = FeeUpdateForm(request.POST, instance=student_profile)
+                if fee_form.is_valid():
+                    profile = fee_form.save(commit=False)
+
+                    # mark as updated
+                    profile.fee_updated = True
+
+                    profile.save()
+                    messages.success(request, "Fee balance updated successfully")
+
+                    # RELOAD UPDATED INSTANCES
+                    student_profile.refresh_from_db()
+
+                else:
+                    messages.error(request, "Error updating fee.")
+            # ALWAYS REINITIALIZE FORMS
+            search_form = StudentSearchForm(initial={'student_id': student_profile.student_id})
+
     return render(request, 'accounts/dashboard.html', {
         'search_form': search_form,
-        'student_profile': student_profile
+        'fee_form': fee_form,
+        'student_profile': student_profile,
+        'threshold': MINIMUM_BALANCE_THRESHOLD
     })
 
+@login_required
+@role_required(['ACCOUNTS'])
+def approve_student(request, student_id):
+    student_profile = get_object_or_404(StudentProfile, student_id=student_id)
+
+    # check 1: Prevent double approval
+    if student_profile.is_approved:
+        messages.info(request, "Student already approved")
+        return redirect('accounts_dashboard')
+    
+    # check 2: Verify Fee requirement
+    if student_profile.fee_balance > MINIMUM_BALANCE_THRESHOLD:
+        messages.error(request, f"Cannot approve. Outstanding balance: {student_profile.fee_balance}")
+        return redirect('accounts_dashboard')
+    
+    # check 3: success
+    student_profile.is_approved = True
+    student_profile.approved_by = request.user
+    student_profile.date_approved = timezone.now()
+    student_profile.save()
+
+    messages.success(request, "Student approved successfully")
+    return redirect('accounts_dashboard')
 
 @role_required(['REGISTRAR'])
 @login_required
