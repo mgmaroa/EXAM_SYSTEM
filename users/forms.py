@@ -1,5 +1,7 @@
 from django import forms
+from .models import StudentProfile
 
+# Form for searching student details
 class StudentSearchForm(forms.Form):
     student_id = forms.CharField(
         label='Enter Student ID',
@@ -10,3 +12,15 @@ class StudentSearchForm(forms.Form):
             }
         )
     )
+
+# Form for updating Student data
+class FeeUpdateForm(forms.ModelForm):
+    class Meta:
+        model = StudentProfile
+        fields = ['fee_balance'] # only allow editing this
+
+        widgets = {
+            'fee_balance': forms.NumberInput(attrs={
+                'class': 'form-control'
+            })
+        }
