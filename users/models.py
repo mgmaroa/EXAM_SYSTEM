@@ -35,6 +35,7 @@ class StudentProfile(models.Model):
     fee_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     # Approval logic
+    fee_updated = models.BooleanField(default=False)
     is_approved = models.BooleanField(default=False)
     date_approved = models.DateTimeField(null=True, blank=True)
     approved_by = models.ForeignKey(
