@@ -16,7 +16,7 @@ class CustomUserAdmin(UserAdmin):
 # Custom StudentProfle admin
 @admin.register(StudentProfile)
 class StudentProfileAdmin(admin.ModelAdmin):
-    list_display = ['student_id', 'get_name', 'course', 'fee_balance', 'is_approved', 'approved_by']
+    list_display = ['student_id', 'get_name', 'course', 'fee_balance', 'fee_updated', 'is_approved', 'approved_by']
     search_fields = ['student_id', 'user__first_name', 'user__last_name']
     list_filter = ['is_approved', 'course']
     readonly_fields = ['date_approved']
