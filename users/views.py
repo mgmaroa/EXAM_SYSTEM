@@ -157,7 +157,16 @@ def generate_exam_card(request, student_id):
 
     return response
 
-@role_required(['STUDENT'])
 @login_required
+@role_required(['STUDENT'])
 def student_dashboard(request):
-    return HttpResponse("Student Dashboard")
+    # Retrieve the profile linked to the currently logged-in user
+    try:
+        profile = request.user.profile
+    except StudentProfile.DoesNotExist:
+        profile = None
+    
+    return render(request, 'student/profile.html', {
+        'profile': profile,
+        'threshold': MINIMUM_BALANCE_THRESHOLD
+    })
