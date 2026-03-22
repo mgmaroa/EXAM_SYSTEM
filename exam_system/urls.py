@@ -16,10 +16,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('accounts/', include('django.contrib.auth.urls')), # Provides login, logout, password reset
-    path('', include('users.urls')),
+
+    # Make the root URL the Login Page
+    path('', auth_views.LoginView.as_view(), name='login'),
+
+    path('auth/', include('django.contrib.auth.urls')), # Provides login, logout, password reset
+    
+    # app-specific URLs (Registrar, Accounts, Student)
+    path('exam_portal/', include('users.urls')),
     
 ]
