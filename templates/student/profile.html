@@ -1,0 +1,42 @@
+<h2>Student Examination Portal</h2>
+<p>Welcome, {{ user.get_full_name }}, </p>
+
+<br>
+
+<div>
+    <h3>Student Profile:</h3>
+
+    <p><strong>Student ID:</strong> {{ profile.student_id }}</p>
+    <p><strong>Course:</strong> {{ profile.course }}</p>
+
+</div>
+
+<br>
+
+<div class="status-container">
+    {% if profile %}
+        <h3>Current Status:</h3>
+        
+        {% if profile.is_approved %}
+            <div class="alert-success">
+                <strong>✅ APPROVED:</strong> Your exam card has been processed and is ready for collection at the Academic Registrar's office.
+            </div>
+            <p>Approval Date: {{ profile.date_approved|date:"d M Y" }}</p>
+            
+        {% elif profile.fee_balance > threshold %}
+            <div class="alert-danger">
+                <strong>❌ ACTION REQUIRED:</strong> Your exam card is NOT ready. 
+                You have an outstanding fee balance of <strong>{{ profile.fee_balance }}</strong>.
+                Please clear your fees at the Finance Office to proceed.
+            </div>
+            
+        {% else %}
+            <div class="alert-warning">
+                <strong>⏳ PENDING:</strong> Awaiting final verification from the Accounts Office. Please check back later.
+            </div>
+        {% endif %}
+
+    {% else %}
+        <p>Error: Student profile not found. Please contact ICT.</p>
+    {% endif %}
+</div>
