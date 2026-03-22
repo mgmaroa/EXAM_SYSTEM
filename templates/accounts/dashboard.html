@@ -1,14 +1,21 @@
 <h2>Accounts Approval Portal</h2>
 
+<!-- Search Form -->
 <form action="" method="post">
     {% csrf_token %}
     {{ search_form.as_p }}
-    <button type="submit">Search Student</button>
+    <button type="submit" name="search_student">Search Student</button>
 </form>
 
 {% if messages %}
     {% for message in messages %}
-        <p style="color: red;">{{ message }}</p>
+        {% if message.tags == 'error' %}
+            <p style="color: red;">{{ message }}</p>
+        {% elif message.tags == 'success' %}
+            <p style="color: green;">{{ message }}</p>
+        {% else %}
+            <p style="color: orange;">{{message}}</p>
+        {% endif %}
     {% endfor %}
 {% endif %}
 
@@ -19,16 +26,39 @@
     <p><strong>ID:</strong> {{ student_profile.student_id }}</p>
     <p><strong>Name:</strong> {{ student_profile.user.get_full_name }}</p>
     <p><strong>Course:</strong> {{ student_profile.course }}</p>
-    <p><strong>Fee Balance: </strong><strong>{{ student_profile.fee_balance }}</strong></p>
+
+    <hr>
 
     {% if student_profile.is_approved %}
-        <div style="color: green;">
-            Status: Approved by {{ student_profile.approved_by.username }} on {{ student_profile.date_approved }}
-        </div>
+        <p style="color: green;">
+            Already Approved by {{ student_profile.approved_by.username }} on {{ student_profile.date_approved }}
+        </p>
     {% else %}
-        <div style="color: red;">
-                Status: Incomplete Payment. Student must pay {{ student_id.fee_balance }} before approval.
-        </div>
+
+        <!-- Show update form ONLY if not approved -->
+        <h4>Update Fee Balance</h4>
+        <form action="" method="post">
+            {% csrf_token %}
+            {{ fee_form.as_p }}
+            <input type="hidden" name="student_id" value="{{ student_profile.student_id }}">
+            <button type="submit" name="update_fee">Update Balance</button>
+        </form>
+
+        {% if not student_profile.fee_updated %}
+            <p style="color: orange;">
+                Fee has not been updated yet.
+            </p>
+        {% elif student_profile.fee_balance <= threshold %}
+            <form action="{% url 'approve_student' student_profile.student_id %}" method='POST'>
+                {% csrf_token %}
+                <button type="submit" style="background-color: blue; color: white;">Approve</button>
+            </form>
+        {% else %}
+            <p style="color: red;">
+                Cannot approve. Outstanding balance: {{ student_profile.fee_balance }}
+            </p>
+        {% endif %}
+        
     {% endif %}
 
 {% endif %}
