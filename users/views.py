@@ -1,3 +1,5 @@
+import csv
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
@@ -7,7 +9,10 @@ from django.template.loader import get_template
 from reportlab.pdfgen import canvas
 from .permissions import role_required
 from .models import StudentProfile
-from .forms import StudentSearchForm, FeeUpdateForm
+from .forms import StudentSearchForm, FeeUpdateForm, StudentImportForm
+from .services import import_students_from_excel, StudentImportError
+
+SKIPPED_REPORT_FIELDS = ['row', 'student_id', 'full_name', 'course', 'reason']
 
 # Assuming 0.00 is the requirement, or adjust to your "Minimum Requirement"
 MINIMUM_BALANCE_THRESHOLD = 10000
@@ -18,7 +23,8 @@ def dashboard_redirect(request):
     user = request.user
 
     if user.role == 'ICT':
-        return redirect('admin:index')
+        # return redirect('admin:index')
+        return redirect('ict_dashboard')
     elif user.role == 'ACCOUNTS':
         return redirect('accounts_dashboard')
     elif user.role == 'REGISTRAR':
@@ -29,7 +35,7 @@ def dashboard_redirect(request):
 @login_required
 @role_required(['ICT'])
 def ict_dashboard(request):
-    return HttpResponse("ICT Dashboard")
+    return render(request, 'ict/dashboard.html')
 
 @login_required
 @role_required(['ACCOUNTS'])
@@ -170,3 +176,62 @@ def student_dashboard(request):
         'profile': profile,
         'threshold': MINIMUM_BALANCE_THRESHOLD
     })
+
+
+@login_required
+@role_required(['ICT'])
+def import_students(request):
+    result = None
+    error = None
+
+    if request.method == 'POST':
+        form = StudentImportForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                result = import_students_from_excel(form.cleaned_data['excel_file'])
+
+                # Stash the skipped rows in the session so they can be downloaded
+                # as a CSV without re-uploading or re-processing the file.
+                request.session['last_import_skipped'] = result.skipped
+
+                if result.created_count:
+                    messages.success(request, f"Created {result.created_count} student account(s).")
+                if result.skipped_count:
+                    messages.warning(
+                        request,
+                        f"Skipped {result.skipped_count} row(s) — see the report below for details."
+                    )
+                if not result.created_count and not result.skipped_count:
+                    messages.info(request, "No rows were processed.")
+
+            except StudentImportError as exc:
+                error = str(exc)
+                messages.error(request, error)
+        else:
+            error = "Please correct the errors below."
+    else:
+        form = StudentImportForm()
+
+    return render(request, 'ict/import_students.html', {
+        'form': form,
+        'result': result,
+        'error': error,
+        'has_report': bool(request.session.get('last_import_skipped')),
+    })
+
+@login_required
+@role_required(['ICT'])
+def download_skipped_report(request):
+    skipped = request.session.get('last_import_skipped')
+    if not skipped:
+        messages.info(request, "No skipped-rows report available yet. Run an import first.")
+        return redirect('import_students')
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="skipped_students.csv"'
+
+    writer = csv.DictWriter(response, fieldnames=SKIPPED_REPORT_FIELDS)
+    writer.writeheader()
+    writer.writerows(skipped)
+
+    return response
