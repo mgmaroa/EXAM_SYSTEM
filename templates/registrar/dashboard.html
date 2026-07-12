@@ -1,31 +1,62 @@
-<h2>Registrar Panel: Approved Students</h2>
+{% extends "base.html" %}
+{% block title %}Registrar Dashboard · KIMC Student Records{% endblock %}
 
-<table border="1">
-    <thead>
-        <th>Student ID</th>
-        <th>Name</th>
-        <th>Course</th>
-        <th>Fee Balance</th>
-        <th>Approved_By</th>
-        <th>Action</th>
-    </thead>
+{% block content %}
+<div class="page-title">
+  <p class="page-eyebrow">Registrar's Office</p>
+  <h1>Approved Students</h1>
+</div>
 
-    <tbody>
-        {% for student in approved_students %}
-        <tr>
-            <td>{{ student.student_id }}</td>
-            <td>{{ student.user.get_full_name }}</td>
-            <td>{{ student.course }}</td>
-            <td>{{ student.fee_balance }}</td>
-            <td>{{ student.approved_by }}</td>
-            <td>
-                <a href="{% url 'generate_exam_card' student.student_id %}" target="_blank">Download Exam Card</a>
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="6">No approved students found</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="card-certificate">
+  <div class="cc-header">
+    <h2>Ready for Examination Cards</h2>
+    <span class="role-pill" style="color:var(--slate-muted); border-color:var(--rule);">
+      {{ approved_students|length }} student{{ approved_students|length|pluralize }}
+    </span>
+  </div>
+  <div class="cc-body" style="padding:0;">
+    {% if approved_students %}
+      <div style="overflow-x:auto;">
+        <table class="table-institutional">
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Name</th>
+              <th>Course</th>
+              <th>Date Approved</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for student in approved_students %}
+              <tr>
+                <td>{{ student.student_id }}</td>
+                <td>{{ student.user.get_full_name|default:student.user.username }}</td>
+                <td>{{ student.course }}</td>
+                <td>{{ student.date_approved|date:"d M Y" }}</td>
+                <td style="text-align:right;">
+                  <a href="{% url 'generate_exam_card' student.student_id %}"
+                     class="btn-institutional btn-gold-outline" style="padding:0.35rem 0.85rem; font-size:0.8rem;">
+                    Generate exam card
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="4" y="5" width="16" height="15" rx="1.5"/>
+            <path d="M8 3v4M16 3v4M4 10h16"/>
+          </svg>
+        </div>
+        <p><strong>No approved students yet</strong></p>
+        <p>Students will appear here once the Accounts office approves their fee status.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

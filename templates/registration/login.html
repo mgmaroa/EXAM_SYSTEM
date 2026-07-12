@@ -1,26 +1,54 @@
-<!-- templates/registration/login.html -->
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Login</title>
-</head>
-<body>
-    <h2>Login</h2>
+{% extends "base.html" %}
+{% block title %}Sign In · KIMC Student Records{% endblock %}
 
-    {% if form.errors %}
-        <p style="color:red;">Invalid username or password</p>
-    {% endif %}
+{% block content %}
+<div class="login-shell">
+  <div class="login-card">
+    <div class="card-certificate">
+      <div class="cc-header" style="justify-content:center;">
+        <h2 class="font-serif">Sign In</h2>
+      </div>
+      <div class="cc-body">
+        <p class="text-center" style="color:var(--slate-muted); font-size:0.85rem; margin-bottom:1.25rem;">
+          Enter your credentials to access the student records portal.
+        </p>
 
-    <form method="post">
-        {% csrf_token %}
-        
-        <label>Username:</label>
-        {{ form.username }}<br><br>
+        {% if form.non_field_errors %}
+          <div class="alert-institutional alert-error">
+            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+          </div>
+        {% endif %}
 
-        <label>Password:</label>
-        {{ form.password }}<br><br>
+        <form method="post" action="{% url 'login' %}" class="form-institutional">
+          {% csrf_token %}
 
-        <button type="submit">Login</button>
-    </form>
-</body>
-</html>
+          <div class="field-group">
+            <label for="{{ form.username.id_for_label }}">Username</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+              <div class="field-errors">{{ form.username.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <div class="field-group">
+            <label for="{{ form.password.id_for_label }}">Password</label>
+            {{ form.password }}
+            {% if form.password.errors %}
+              <div class="field-errors">{{ form.password.errors|striptags }}</div>
+            {% endif %}
+          </div>
+
+          <input type="hidden" name="next" value="{{ next }}">
+
+          <button type="submit" class="btn-institutional btn-navy" style="width:100%; justify-content:center;">
+            Sign in
+          </button>
+        </form>
+      </div>
+    </div>
+    <p class="text-center" style="color:var(--slate-muted); font-size:0.78rem;">
+      Trouble signing in? Contact the ICT office.
+    </p>
+  </div>
+</div>
+{% endblock %}

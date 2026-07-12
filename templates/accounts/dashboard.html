@@ -1,64 +1,123 @@
-<h2>Accounts Approval Portal</h2>
+{% extends "base.html" %}
+{% block title %}Accounts Dashboard · KIMC Student Records{% endblock %}
 
-<!-- Search Form -->
-<form action="" method="post">
-    {% csrf_token %}
-    {{ search_form.as_p }}
-    <button type="submit" name="search_student">Search Student</button>
-</form>
+{% block content %}
+<div class="page-title">
+  <p class="page-eyebrow">Accounts Office</p>
+  <h1>Fee &amp; Approval Desk</h1>
+</div>
 
-{% if messages %}
-    {% for message in messages %}
-        {% if message.tags == 'error' %}
-            <p style="color: red;">{{ message }}</p>
-        {% elif message.tags == 'success' %}
-            <p style="color: green;">{{ message }}</p>
-        {% else %}
-            <p style="color: orange;">{{message}}</p>
+<div class="card-certificate">
+  <div class="cc-header">
+    <h2>Find a Student</h2>
+  </div>
+  <div class="cc-body">
+    <form method="post" class="form-institutional" style="display:flex; gap:0.75rem; align-items:flex-end; flex-wrap:wrap;">
+      {% csrf_token %}
+      <input type="hidden" name="search_student" value="1">
+      <div class="field-group" style="flex:1; min-width:220px; margin-bottom:0;">
+        <label for="{{ search_form.student_id.id_for_label }}">Student ID</label>
+        {{ search_form.student_id }}
+        {% if search_form.student_id.errors %}
+          <div class="field-errors">{{ search_form.student_id.errors|striptags }}</div>
         {% endif %}
-    {% endfor %}
-{% endif %}
+      </div>
+      <button type="submit" class="btn-institutional btn-navy">Search</button>
+    </form>
+  </div>
+</div>
 
 {% if student_profile %}
-    <hr>
-    <h3>Student Details</h3>
+  <div class="card-certificate">
+    <div class="cc-header">
+      <h2>{{ student_profile.user.get_full_name|default:student_profile.user.username }}</h2>
+      {% if student_profile.is_approved %}
+        <span class="status-badge approved">Approved</span>
+      {% elif student_profile.fee_balance > threshold %}
+        <span class="status-badge blocked">Above threshold</span>
+      {% else %}
+        <span class="status-badge pending">Pending</span>
+      {% endif %}
+    </div>
+    <div class="cc-body">
+      <dl style="margin:0 0 1.25rem;">
+        <div class="data-row">
+          <dt>Student ID</dt>
+          <dd>{{ student_profile.student_id }}</dd>
+        </div>
+        <div class="data-row">
+          <dt>Course</dt>
+          <dd>{{ student_profile.course }}</dd>
+        </div>
+        <div class="data-row">
+          <dt>Fee balance</dt>
+          <dd>{{ student_profile.fee_balance }}</dd>
+        </div>
+        <div class="data-row">
+          <dt>Approval threshold</dt>
+          <dd>{{ threshold }}</dd>
+        </div>
+      </dl>
 
-    <p><strong>ID:</strong> {{ student_profile.student_id }}</p>
-    <p><strong>Name:</strong> {{ student_profile.user.get_full_name }}</p>
-    <p><strong>Course:</strong> {{ student_profile.course }}</p>
-
-    <hr>
-
-    {% if student_profile.is_approved %}
-        <p style="color: green;">
-            Already Approved by {{ student_profile.approved_by.username }} on {{ student_profile.date_approved }}
-        </p>
-    {% else %}
-
-        <!-- Show update form ONLY if not approved -->
-        <h4>Update Fee Balance</h4>
-        <form action="" method="post">
+      {% if student_profile.is_approved %}
+        <div class="alert-institutional alert-info" style="margin-bottom:0;">
+          This student has already been approved
+          {% if student_profile.approved_by %}by {{ student_profile.approved_by.get_full_name|default:student_profile.approved_by.username }}{% endif %}
+          {% if student_profile.date_approved %}on {{ student_profile.date_approved }}{% endif %}.
+          Records are locked from further edits.
+        </div>
+      {% else %}
+        <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+          <form method="post" action="{% url 'approve_student' student_profile.student_id %}">
             {% csrf_token %}
-            {{ fee_form.as_p }}
-            <input type="hidden" name="student_id" value="{{ student_profile.student_id }}">
-            <button type="submit" name="update_fee">Update Balance</button>
+            <button type="submit" class="btn-institutional btn-gold-outline"
+              {% if student_profile.fee_balance > threshold %}disabled title="Outstanding balance exceeds the approval threshold"{% endif %}>
+              Approve student
+            </button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if fee_form %}
+    <div class="card-certificate">
+      <div class="cc-header">
+        <h2>Update Fee Balance</h2>
+      </div>
+      <div class="cc-body">
+        <form method="post" class="form-institutional">
+          {% csrf_token %}
+          <input type="hidden" name="update_fee" value="1">
+          <input type="hidden" name="student_id" value="{{ student_profile.student_id }}">
+
+          {% for field in fee_form %}
+            <div class="field-group">
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}
+                <div class="field-help">{{ field.help_text }}</div>
+              {% endif %}
+              {% if field.errors %}
+                <div class="field-errors">{{ field.errors|striptags }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+
+          <button type="submit" class="btn-institutional btn-navy">Save fee update</button>
         </form>
+      </div>
+    </div>
+  {% endif %}
 
-        {% if not student_profile.fee_updated %}
-            <p style="color: orange;">
-                Fee has not been updated yet.
-            </p>
-        {% elif student_profile.fee_balance <= threshold %}
-            <form action="{% url 'approve_student' student_profile.student_id %}" method='POST'>
-                {% csrf_token %}
-                <button type="submit" style="background-color: blue; color: white;">Approve</button>
-            </form>
-        {% else %}
-            <p style="color: red;">
-                Cannot approve. Outstanding balance: {{ student_profile.fee_balance }}
-            </p>
-        {% endif %}
-        
-    {% endif %}
-
+{% elif request.method == "POST" %}
+  <div class="card-certificate">
+    <div class="cc-body">
+      <div class="empty-state">
+        <p><strong>No student found</strong></p>
+        <p>Double-check the student ID and try again.</p>
+      </div>
+    </div>
+  </div>
 {% endif %}
+{% endblock %}

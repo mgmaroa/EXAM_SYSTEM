@@ -1,42 +1,86 @@
-<h2>Student Examination Portal</h2>
-<p>Welcome, {{ user.get_full_name }}, </p>
+{% extends "base.html" %}
+{% block title %}My Profile · KIMC Student Records{% endblock %}
 
-<br>
-
-<div>
-    <h3>Student Profile:</h3>
-
-    <p><strong>Student ID:</strong> {{ profile.student_id }}</p>
-    <p><strong>Course:</strong> {{ profile.course }}</p>
-
+{% block content %}
+<div class="page-title">
+  <p class="page-eyebrow">Student</p>
+  <h1>My Profile</h1>
 </div>
 
-<br>
-
-<div class="status-container">
-    {% if profile %}
-        <h3>Current Status:</h3>
-        
+{% if profile %}
+  <div class="card-certificate">
+    <div class="cc-header">
+      <h2>{{ profile.user.get_full_name|default:profile.user.username }}</h2>
+      {% if profile.is_approved %}
+        <span class="status-badge approved">Approved</span>
+      {% elif profile.fee_balance > threshold %}
+        <span class="status-badge blocked">Balance above threshold</span>
+      {% else %}
+        <span class="status-badge pending">Pending approval</span>
+      {% endif %}
+    </div>
+    <div class="cc-body">
+      <dl style="margin:0;">
+        <div class="data-row">
+          <dt>Student ID</dt>
+          <dd>{{ profile.student_id }}</dd>
+        </div>
+        <div class="data-row">
+          <dt>Course</dt>
+          <dd>{{ profile.course }}</dd>
+        </div>
+        <div class="data-row">
+          <dt>Fee balance</dt>
+          <dd>{{ profile.fee_balance }}</dd>
+        </div>
+        <div class="data-row">
+          <dt>Approval threshold</dt>
+          <dd>{{ threshold }}</dd>
+        </div>
         {% if profile.is_approved %}
-            <div class="alert-success">
-                <strong>✅ APPROVED:</strong> Your exam card has been processed and is ready for collection at the Academic Registrar's office.
-            </div>
-            <p>Approval Date: {{ profile.date_approved|date:"d M Y" }}</p>
-            
-        {% elif profile.fee_balance > threshold %}
-            <div class="alert-danger">
-                <strong>❌ ACTION REQUIRED:</strong> Your exam card is NOT ready. 
-                You have an outstanding fee balance of <strong>{{ profile.fee_balance }}</strong>.
-                Please clear your fees at the Finance Office to proceed.
-            </div>
-            
-        {% else %}
-            <div class="alert-warning">
-                <strong>⏳ PENDING:</strong> Awaiting final verification from the Accounts Office. Please check back later.
-            </div>
+        <div class="data-row">
+          <dt>Approved by</dt>
+          <dd>{{ profile.approved_by.get_full_name|default:profile.approved_by.username }}</dd>
+        </div>
+        <div class="data-row">
+          <dt>Date approved</dt>
+          <dd>{{ profile.date_approved }}</dd>
+        </div>
         {% endif %}
+      </dl>
+    </div>
+  </div>
 
-    {% else %}
-        <p>Error: Student profile not found. Please contact ICT.</p>
-    {% endif %}
-</div>
+  {% if not profile.is_approved %}
+    <div class="alert-institutional alert-warning">
+      Your record has not yet been approved by the Accounts office
+      {% if profile.fee_balance > threshold %}
+        — your outstanding fee balance is above the approval threshold.
+      {% else %}
+        — check back once your fee balance has been reviewed.
+      {% endif %}
+      Your examination card will be available from the Registrar once approved.
+    </div>
+  {% else %}
+    <div class="alert-institutional alert-success">
+      Your record is approved. Please contact the Registrar's office to collect your examination card.
+    </div>
+  {% endif %}
+
+{% else %}
+  <div class="card-certificate">
+    <div class="cc-body">
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="8" r="3.5"/>
+            <path d="M4.5 20c1.5-4 5-5.5 7.5-5.5s6 1.5 7.5 5.5"/>
+          </svg>
+        </div>
+        <p><strong>No profile found</strong></p>
+        <p>Your student record hasn't been set up yet. Please contact the Accounts office to have your profile created.</p>
+      </div>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
