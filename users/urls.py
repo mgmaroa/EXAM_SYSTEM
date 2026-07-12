@@ -11,4 +11,6 @@ urlpatterns = [
     path('accounts/approve/<str:student_id>/', views.approve_student, name='approve_student'),
     path('registrar/exam-card/<str:student_id>/', views.generate_exam_card, name='generate_exam_card'),
     path('student/profile/', views.student_dashboard, name='student_dashboard'),
+    path('ict/import-students/', views.import_students, name='import_students'),
+    path('ict/import-students/report/', views.download_skipped_report, name='download_skipped_report'),
 ]
