@@ -1,0 +1,410 @@
+/* ============================================================
+   Institutional theme — layered on top of Bootstrap 5
+   Palette: navy / gold / parchment. Serif headings (Lora),
+   Inter for body & data. Certificate-style hairline rules.
+   ============================================================ */
+
+:root {
+  --ink-navy: #0f2a4a;
+  --ink-navy-deep: #0a1d33;
+  --gold: #a9791f;
+  --gold-soft: #c9a24a;
+  --parchment: #f6f4ee;
+  --card: #ffffff;
+  --rule: #d8d2c2;
+  --slate: #23303f;
+  --slate-muted: #5b6472;
+  --success: #1e6b3e;
+  --success-bg: #e8f3ec;
+  --warning: #8a5a00;
+  --warning-bg: #f8efdc;
+  --danger: #a32020;
+  --danger-bg: #f7e8e6;
+  --info: #245b8a;
+  --info-bg: #e7eff6;
+  --radius: 3px;
+}
+
+html, body {
+  background: var(--parchment);
+  color: var(--slate);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  min-height: 100%;
+}
+
+h1, h2, h3, h4, .font-serif {
+  font-family: "Lora", Georgia, serif;
+  color: var(--ink-navy);
+  letter-spacing: -0.01em;
+}
+
+a { color: var(--ink-navy); }
+a:hover { color: var(--gold); }
+
+/* ---------- Letterhead / Navbar ---------- */
+
+.letterhead {
+  background: linear-gradient(180deg, var(--ink-navy-deep), var(--ink-navy));
+  border-bottom: 3px solid var(--gold);
+  position: relative;
+}
+
+.letterhead::after {
+  content: "";
+  display: block;
+  height: 1px;
+  background: rgba(201, 162, 74, 0.35);
+  margin-top: 3px;
+}
+
+.letterhead-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+}
+
+.seal {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+}
+
+.brand-text .institution-name {
+  font-family: "Lora", serif;
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.brand-text .institution-tagline {
+  font-size: 0.68rem;
+  color: var(--gold-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin: 0;
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  font-size: 0.85rem;
+}
+
+.role-pill {
+  display: inline-block;
+  padding: 0.18rem 0.65rem;
+  border: 1px solid var(--gold-soft);
+  color: var(--gold-soft);
+  border-radius: 999px;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.nav-user a.logout-link {
+  color: #d9e2ec;
+  text-decoration: none;
+  border-bottom: 1px dotted rgba(217, 226, 236, 0.5);
+}
+.nav-user a.logout-link:hover { color: var(--gold-soft); }
+
+/* ---------- Layout ---------- */
+
+.page-container {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3.5rem;
+}
+
+.page-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.72rem;
+  color: var(--slate-muted);
+  margin-bottom: 0.25rem;
+}
+
+.page-title {
+  margin-bottom: 1.75rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* ---------- Certificate-style cards ---------- */
+
+.card-certificate {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.card-certificate .cc-header {
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--rule);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.card-certificate .cc-header::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: repeating-linear-gradient(
+    90deg, var(--gold) 0, var(--gold) 6px, transparent 6px, transparent 10px
+  );
+}
+
+.card-certificate .cc-header h2,
+.card-certificate .cc-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.card-certificate .cc-body {
+  padding: 1.25rem;
+}
+
+/* ---------- Status badges ---------- */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.status-badge.approved { background: var(--success-bg); color: var(--success); }
+.status-badge.pending  { background: var(--warning-bg); color: var(--warning); }
+.status-badge.blocked  { background: var(--danger-bg); color: var(--danger); }
+
+.status-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ---------- Data / definition rows ---------- */
+
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px dashed var(--rule);
+  font-size: 0.92rem;
+}
+.data-row:last-child { border-bottom: none; }
+.data-row dt {
+  color: var(--slate-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+.data-row dd { margin: 0; font-weight: 600; text-align: right; }
+
+/* ---------- Forms (raw Django fields, no .form-control needed) ---------- */
+
+.form-institutional label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--slate-muted);
+  margin-bottom: 0.3rem;
+}
+
+.form-institutional input[type="text"],
+.form-institutional input[type="number"],
+.form-institutional input[type="password"],
+.form-institutional input[type="email"],
+.form-institutional input[type="search"],
+.form-institutional select,
+.form-institutional textarea {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--parchment);
+  font-family: "Inter", sans-serif;
+  font-size: 0.95rem;
+  color: var(--slate);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-institutional input:focus,
+.form-institutional select:focus,
+.form-institutional textarea:focus {
+  outline: none;
+  border-color: var(--ink-navy);
+  box-shadow: 0 0 0 3px rgba(15, 42, 74, 0.12);
+  background: #fff;
+}
+
+.form-institutional .field-group { margin-bottom: 1.1rem; }
+.form-institutional .field-errors {
+  color: var(--danger);
+  font-size: 0.8rem;
+  margin-top: 0.3rem;
+}
+.form-institutional .field-help {
+  color: var(--slate-muted);
+  font-size: 0.78rem;
+  margin-top: 0.3rem;
+}
+
+/* ---------- Buttons ---------- */
+
+.btn-institutional {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius);
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.08s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.btn-institutional:active { transform: translateY(1px); }
+
+.btn-navy {
+  background: var(--ink-navy);
+  color: #fff;
+}
+.btn-navy:hover { background: var(--ink-navy-deep); color: #fff; }
+
+.btn-gold-outline {
+  background: transparent;
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.btn-gold-outline:hover { background: var(--gold); color: #fff; }
+
+.btn-danger-outline {
+  background: transparent;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.btn-danger-outline:hover { background: var(--danger); color: #fff; }
+
+.btn-institutional:disabled,
+.btn-institutional.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Alerts (maps Django's 'error' tag too) ---------- */
+
+.alert-institutional {
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--slate-muted);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  margin-bottom: 0.85rem;
+}
+.alert-institutional.alert-success { border-left-color: var(--success); background: var(--success-bg); color: var(--success); }
+.alert-institutional.alert-error,
+.alert-institutional.alert-danger  { border-left-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+.alert-institutional.alert-warning { border-left-color: var(--warning); background: var(--warning-bg); color: var(--warning); }
+.alert-institutional.alert-info,
+.alert-institutional.alert-debug   { border-left-color: var(--info); background: var(--info-bg); color: var(--info); }
+
+/* ---------- Table (registrar list) ---------- */
+
+.table-institutional {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.table-institutional thead th {
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-size: 0.7rem;
+  color: var(--slate-muted);
+  padding: 0.6rem 0.75rem;
+  border-bottom: 2px solid var(--ink-navy);
+}
+.table-institutional tbody td {
+  padding: 0.7rem 0.75rem;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: middle;
+}
+.table-institutional tbody tr:hover { background: rgba(15, 42, 74, 0.03); }
+
+/* ---------- Empty states ---------- */
+
+.empty-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--slate-muted);
+}
+.empty-state .empty-icon { opacity: 0.4; margin-bottom: 0.75rem; }
+
+/* ---------- Login page ---------- */
+
+.login-shell {
+  min-height: calc(100vh - 90px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+.login-card {
+  width: 100%;
+  max-width: 400px;
+}
+
+/* ---------- Focus visibility (accessibility floor) ---------- */
+
+a:focus-visible, button:focus-visible, .btn-institutional:focus-visible {
+  outline: 2px solid var(--ink-navy);
+  outline-offset: 2px;
+}
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 576px) {
+  .data-row { flex-direction: column; }
+  .data-row dd { text-align: left; }
+  .letterhead-inner { flex-direction: column; align-items: flex-start; }
+}
