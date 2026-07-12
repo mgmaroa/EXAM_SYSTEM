@@ -26,13 +26,13 @@ def dashboard_redirect(request):
     else:
         return redirect('student_dashboard')
 
-@role_required(['ICT'])
 @login_required
+@role_required(['ICT'])
 def ict_dashboard(request):
     return HttpResponse("ICT Dashboard")
 
-@role_required(['ACCOUNTS'])
 @login_required
+@role_required(['ACCOUNTS'])
 def accounts_dashboard(request):
     search_form = StudentSearchForm() # Handles the get request i.e display form
     fee_form = None    
