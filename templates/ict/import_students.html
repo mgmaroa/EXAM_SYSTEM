@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Upload Students · KIMC Student Records{% endblock %}
+
+{% block content %}
+<div class="page-title">
+  <p class="page-eyebrow">ICT Office</p>
+  <h1>Upload Students</h1>
+</div>
+
+<div class="card-certificate">
+  <div class="cc-header">
+    <h2>Import from Excel</h2>
+  </div>
+  <div class="cc-body">
+    <p style="color:var(--slate-muted); font-size:0.9rem; margin-bottom:1.25rem;">
+      Upload an <code>.xlsx</code> or <code>.xls</code> file with columns
+      <strong>student_id</strong>, <strong>full_name</strong>, and <strong>course</strong>.
+      Each new student's initial password is set to their student ID — let them know to
+      change it after first sign-in. Rows with an existing student ID or missing fields
+      are skipped, not overwritten.
+    </p>
+
+    {% if error %}
+      <div class="alert-institutional alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="form-institutional">
+      {% csrf_token %}
+      <div class="field-group">
+        <label for="{{ form.excel_file.id_for_label }}">Excel file</label>
+        <div class="file-drop">
+          {{ form.excel_file }}
+        </div>
+        {% if form.excel_file.help_text %}
+          <div class="field-help">{{ form.excel_file.help_text }}</div>
+        {% endif %}
+        {% if form.excel_file.errors %}
+          <div class="field-errors">{{ form.excel_file.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="btn-institutional btn-navy">Upload &amp; create accounts</button>
+    </form>
+  </div>
+</div>
+
+{% if result %}
+  <div class="stat-tiles">
+    <div class="stat-tile">
+      <div class="stat-value">{{ result.total_rows }}</div>
+      <div class="stat-label">Rows in file</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-value">{{ result.created_count }}</div>
+      <div class="stat-label">Accounts created</div>
+    </div>
+    <div class="stat-tile {% if result.skipped_count %}is-warning{% endif %}">
+      <div class="stat-value">{{ result.skipped_count }}</div>
+      <div class="stat-label">Rows skipped</div>
+    </div>
+  </div>
+
+  {% if result.skipped %}
+    <div class="card-certificate">
+      <div class="cc-header">
+        <h2>Skipped Rows</h2>
+        <a href="{% url 'download_skipped_report' %}" class="btn-institutional btn-gold-outline"
+           style="padding:0.35rem 0.85rem; font-size:0.8rem;">
+          Download full report (CSV)
+        </a>
+      </div>
+      <div class="cc-body" style="padding:0;">
+        <div style="overflow-x:auto;">
+          <table class="table-institutional">
+            <thead>
+              <tr>
+                <th>Row</th>
+                <th>Student ID</th>
+                <th>Name</th>
+                <th>Course</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in result.skipped|slice:":25" %}
+                <tr>
+                  <td>{{ item.row }}</td>
+                  <td>{{ item.student_id|default:"—" }}</td>
+                  <td>{{ item.full_name|default:"—" }}</td>
+                  <td>{{ item.course|default:"—" }}</td>
+                  <td><span class="status-badge blocked">{{ item.reason }}</span></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if result.skipped_count > 25 %}
+          <p style="padding:0.9rem 1.25rem; color:var(--slate-muted); font-size:0.85rem; margin:0;">
+            Showing the first 25 of {{ result.skipped_count }} skipped rows.
+            Download the CSV report above for the full list.
+          </p>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+{% elif has_report %}
+  <div class="card-certificate">
+    <div class="cc-body">
+      <p style="margin:0; color:var(--slate-muted); font-size:0.9rem;">
+        A report from your last import is still available.
+        <a href="{% url 'download_skipped_report' %}">Download it here.</a>
+      </p>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

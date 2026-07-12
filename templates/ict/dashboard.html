@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}ICT Dashboard · KIMC Student Records{% endblock %}
+
+{% block content %}
+<div class="page-title">
+  <p class="page-eyebrow">ICT Office</p>
+  <h1>Administration</h1>
+</div>
+
+<div class="card-certificate">
+  <div class="cc-header">
+    <h2>Student Accounts</h2>
+    <a href="{% url 'admin:index' %}" class="btn-institutional btn-gold-outline">Open Django Admin</a>
+  </div>
+  <div class="cc-body">
+    <p style="color:var(--slate-muted); font-size:0.9rem; margin-bottom:1rem;">
+      Create student accounts in bulk from an Excel roster.
+    </p>
+    <a href="{% url 'import_students' %}" class="btn-institutional btn-navy">Upload students</a>
+  </div>
+</div>
+{% endblock %}
