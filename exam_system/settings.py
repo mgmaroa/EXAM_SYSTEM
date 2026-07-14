@@ -120,6 +120,8 @@ STATIC_URL = 'static/'
 
 STATICFILES_DIRS = [BASE_DIR / 'static']    # dev only — for collectstatic in prod, use STATIC_ROOT
 
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # for collectstatic in prod
+
 # Register custom User model
 AUTH_USER_MODEL = 'users.User'
 
