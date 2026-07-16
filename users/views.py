@@ -19,6 +19,7 @@ from django.http import HttpResponse
 from django.contrib import messages
 from django.utils import timezone
 from django.template.loader import get_template
+from django.contrib.staticfiles import finders
 from reportlab.pdfgen import canvas
 from .permissions import role_required
 from .models import StudentProfile
@@ -206,7 +207,8 @@ def generate_exam_card(request, student_id):
     elements = []
 
     # Logo
-    logo_path = "static/img/kimc_logo.jpeg"  #  logo file
+    # logo_path = "static/img/kimc_logo.jpeg"  #  logo file
+    logo_path = finders.find('img/kimc_logo.jpeg')
     elements.append(Image(logo_path, width=3*cm, height=3*cm, hAlign='CENTER'))
 
     # Institution header text
