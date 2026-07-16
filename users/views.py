@@ -1,4 +1,17 @@
 import csv
+import string
+
+# LOGO SECTION START
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import cm
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+from django.http import HttpResponse
+from io import BytesIO
+
+# LOGO SECTION END
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -16,6 +29,45 @@ SKIPPED_REPORT_FIELDS = ['row', 'student_id', 'full_name', 'course', 'reason']
 
 # Assuming 0.00 is the requirement, or adjust to your "Minimum Requirement"
 MINIMUM_BALANCE_THRESHOLD = 10000
+
+# serial number generation function
+def compute_checksum_char(value: str) -> str:
+    """
+    Simple checksum: sum of character codes mod 36, mapped to 0-9A-Z.
+    Not cryptographic — just catches typos/transcription errors.
+    """
+    alphabet = string.digits + string.ascii_uppercase  # 0-9, A-Z
+    total = sum(ord(c) for c in value)
+    return alphabet[total % 36]
+
+def generate_serial_number():
+    """
+    Generates e.g. SN-2026-000123-K
+    The trailing letter is a checksum so mistyped/forged serials
+    can be caught on verification.
+    """
+    year = timezone.now().year
+    prefix = f"KIMC-{year}-"
+
+    last = (
+        StudentProfile.objects
+        .filter(serial_number__startswith=prefix)
+        .order_by('-serial_number')
+        .first()
+    )
+
+    if last and last.serial_number:
+        # strip checksum char before parsing the sequence
+        last_body = last.serial_number.rsplit('-', 1)[0]
+        last_seq = int(last_body.split('-')[-1])
+        next_seq = last_seq + 1
+    else:
+        next_seq = 1
+
+    body = f"{prefix}{next_seq:06d}"
+    checksum = compute_checksum_char(body)
+    return f"{body}-{checksum}"
+
 
 # Create your views here.
 @login_required
@@ -120,9 +172,10 @@ def approve_student(request, student_id):
     student_profile.is_approved = True
     student_profile.approved_by = request.user
     student_profile.date_approved = timezone.now()
+    student_profile.serial_number = generate_serial_number()
     student_profile.save()
 
-    messages.success(request, "Student approved successfully")
+    messages.success(request, f"Student approved successfully. Serial: {student_profile.serial_number}")
     return redirect('accounts_dashboard')
 
 
@@ -141,31 +194,64 @@ def registrar_dashboard(request):
 @role_required(['REGISTRAR'])
 def generate_exam_card(request, student_id):
     student = get_object_or_404(StudentProfile, student_id=student_id)
-
     if not student.is_approved:
         return HttpResponse("Student not approved", status=403)
-    
-    response = HttpResponse(content_type='application/pdf')
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=2*cm, bottomMargin=2*cm)
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('title', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=18)
+    small_center = ParagraphStyle('small', parent=styles['Normal'], alignment=TA_CENTER, fontSize=8)
+
+    elements = []
+
+    # Logo
+    logo_path = "static/img/kimc_logo.jpeg"  #  logo file
+    elements.append(Image(logo_path, width=3*cm, height=3*cm, hAlign='CENTER'))
+
+    # Institution header text
+    elements.append(Paragraph("<b>KENYA INSTITUTE OF MASS COMMUNICATION</b>", small_center))
+    elements.append(Paragraph("<b>P.O. Box 42422 - 00100 NAIROBI | Uholo Road, Nairobi South B, off Mombasa Road</b>", small_center))
+    elements.append(Spacer(1, 12))
+
+    # Card title
+    elements.append(Paragraph("EXAMINATION CARD", title_style))
+    elements.append(Spacer(1, 16))
+
+    # Details table
+    data = [
+        ["Serial Number", student.serial_number],
+        ["Student ID", student.student_id],
+        ["Full Name", student.user.get_full_name()],
+        ["Course", student.course],
+        ["Approval Date", student.date_approved.strftime("%d %b %Y")],
+    ]
+    table = Table(data, colWidths=[6*cm, 9*cm])
+    table.setStyle(TableStyle([
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 11),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(table)
+    elements.append(Spacer(1, 40))
+
+    # Registrar / signature section
+    elements.append(Paragraph("<b>Academic Registrar:</b>", styles['Normal']))
+    elements.append(Spacer(1, 30))
+
+    sig_data = [["Signature: ____________________", "Stamp: ____________________"]]
+    sig_table = Table(sig_data, colWidths=[9*cm, 9*cm])
+    sig_table.setStyle(TableStyle([('FONTSIZE', (0, 0), (-1, -1), 11)]))
+    elements.append(sig_table)
+
+    doc.build(elements)
+    pdf = buffer.getvalue()
+    buffer.close()
+
+    response = HttpResponse(pdf, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="exam_card_{student.student_id}.pdf"'
-
-    p = canvas.Canvas(response)
-
-    # Content
-    p.setFont("Helvetica", 14)
-    p.drawString(100, 800, "KIMC EXAMINATION CARD")
-
-    p.setFont("Helvetica", 12)
-    p.drawString(100, 750, f"Student ID: {student.student_id}")
-    p.drawString(100, 730, f"Name: {student.user.get_full_name()}")
-    p.drawString(100, 710, f"Course: {student.course}")
-
-    p.drawString(100, 670, "Status: APPROVED")
-
-    p.drawString(100, 630, "Signature: __________________")
-
-    p.showPage()
-    p.save()
-
     return response
 
 @login_required
