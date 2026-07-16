@@ -111,7 +111,12 @@ def approve_student(request, student_id):
         messages.error(request, f"Cannot approve. Outstanding balance: {student_profile.fee_balance}")
         return redirect('accounts_dashboard')
     
-    # check 3: success
+    # check 3: Fee balance must have been reviewed/updated first
+    if not student_profile.fee_updated:
+        messages.error(request, "Cannot approve. Fee balance has not been updated yet.")
+        return redirect('accounts_dashboard')
+
+    # check 4: success
     student_profile.is_approved = True
     student_profile.approved_by = request.user
     student_profile.date_approved = timezone.now()

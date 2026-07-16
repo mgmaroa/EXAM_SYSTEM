@@ -70,10 +70,21 @@
         <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
           <form method="post" action="{% url 'approve_student' student_profile.student_id %}">
             {% csrf_token %}
-            <button type="submit" class="btn-institutional btn-gold-outline"
-              {% if student_profile.fee_balance > threshold %}disabled title="Outstanding balance exceeds the approval threshold"{% endif %}>
-              Approve student
-            </button>
+            {% if student_profile.fee_balance > threshold %}
+              <button type="submit" class="btn-institutional btn-gold-outline"
+                disabled title="Outstanding balance exceeds the approval threshold">
+                Approve student
+              </button>
+            {% elif not student_profile.fee_updated %}
+              <button type="submit" class="btn-institutional btn-gold-outline"
+                disabled title="Fee balance has not been updated yet">
+                Approve student
+              </button>
+            {% else %}
+              <button type="submit" class="btn-institutional btn-gold-outline">
+                Approve student
+              </button>
+            {% endif %}
           </form>
         </div>
       {% endif %}
