@@ -25,6 +25,7 @@
               <th>Course</th>
               <th>Fee Balance</th>
               <th>Date Approved</th>
+              <th>Serial Number</th>
               <th></th>
             </tr>
           </thead>
@@ -36,6 +37,7 @@
                 <td>{{ student.course }}</td>
                 <td>{{ student.fee_balance }}</td>
                 <td>{{ student.date_approved|date:"d M Y" }}</td>
+                <td>{{ student.serial_number }}</td>
                 <td style="text-align:right;">
                   <a href="{% url 'generate_exam_card' student.student_id %}"
                      class="btn-institutional btn-gold-outline" style="padding:0.35rem 0.85rem; font-size:0.8rem;">
