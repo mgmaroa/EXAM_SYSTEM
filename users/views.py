@@ -1,5 +1,6 @@
 import csv
 import string
+import os
 
 # LOGO SECTION START
 from reportlab.lib.pagesizes import A4
@@ -20,6 +21,8 @@ from django.contrib import messages
 from django.utils import timezone
 from django.template.loader import get_template
 from django.contrib.staticfiles import finders
+from django.core.paginator import Paginator
+from django.db.models import Q
 from reportlab.pdfgen import canvas
 from .permissions import role_required
 from .models import StudentProfile
@@ -183,11 +186,33 @@ def approve_student(request, student_id):
 @login_required
 @role_required(['REGISTRAR'])
 def registrar_dashboard(request):
-    # Fetch only students approved by Accounts
-    approved_students = StudentProfile.objects.filter(is_approved=True).order_by('student_id')
+    query = request.GET.get('q', '').strip()
+
+    # select_related('user') avoids one extra query per row when the
+    # template calls student.user.get_full_name() — worth keeping even
+    # without the search feature.
+    approved_students = (
+        StudentProfile.objects
+        .filter(is_approved=True)
+        .select_related('user')
+        .order_by('student_id')
+    )
+
+    if query:
+        approved_students = approved_students.filter(
+            Q(student_id__icontains=query) |
+            Q(user__first_name__icontains=query) |
+            Q(user__last_name__icontains=query) |
+            Q(course__icontains=query)
+        )
+
+    paginator = Paginator(approved_students, 25)  # 25 rows per page
+    page_obj = paginator.get_page(request.GET.get('page'))
 
     return render(request, 'registrar/dashboard.html', {
-        'approved_students': approved_students
+        'page_obj': page_obj,
+        'query': query,
+        'total_approved': StudentProfile.objects.filter(is_approved=True).count(),
     })
 
 
@@ -203,13 +228,15 @@ def generate_exam_card(request, student_id):
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle('title', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=18)
     small_center = ParagraphStyle('small', parent=styles['Normal'], alignment=TA_CENTER, fontSize=8)
+    cell_label_style = ParagraphStyle('cell_label', parent=styles['Normal'], fontSize=11, leading=13, fontName='Helvetica-Bold')
+    cell_style = ParagraphStyle('cell', parent=styles['Normal'], fontSize=11, leading=13)
 
     elements = []
 
     # Logo
-    # logo_path = "static/img/kimc_logo.jpeg"  #  logo file
     logo_path = finders.find('img/kimc_logo.jpeg')
-    elements.append(Image(logo_path, width=3*cm, height=3*cm, hAlign='CENTER'))
+    if logo_path and os.path.exists(logo_path):
+        elements.append(Image(logo_path, width=3*cm, height=3*cm, hAlign='CENTER'))
 
     # Institution header text
     elements.append(Paragraph("<b>KENYA INSTITUTE OF MASS COMMUNICATION</b>", small_center))
@@ -220,21 +247,21 @@ def generate_exam_card(request, student_id):
     elements.append(Paragraph("EXAMINATION CARD", title_style))
     elements.append(Spacer(1, 16))
 
-    # Details table
+    # Details table — values wrapped in Paragraph so long text wraps instead of overflowing
     data = [
-        ["Serial Number", student.serial_number],
-        ["Student ID", student.student_id],
-        ["Full Name", student.user.get_full_name()],
-        ["Course", student.course],
-        ["Approval Date", student.date_approved.strftime("%d %b %Y")],
+        [Paragraph("Serial Number", cell_label_style), Paragraph(student.serial_number, cell_style)],
+        [Paragraph("Student ID", cell_label_style), Paragraph(student.student_id, cell_style)],
+        [Paragraph("Full Name", cell_label_style), Paragraph(student.user.get_full_name(), cell_style)],
+        [Paragraph("Course", cell_label_style), Paragraph(student.course, cell_style)],
+        [Paragraph("Approval Date", cell_label_style), Paragraph(student.date_approved.strftime("%d %b %Y"), cell_style)],
     ]
     table = Table(data, colWidths=[6*cm, 9*cm])
     table.setStyle(TableStyle([
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
         ('FONTSIZE', (0, 0), (-1, -1), 11),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
         ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
     ]))
     elements.append(table)
     elements.append(Spacer(1, 40))
@@ -243,7 +270,7 @@ def generate_exam_card(request, student_id):
     elements.append(Paragraph("<b>Academic Registrar:</b>", styles['Normal']))
     elements.append(Spacer(1, 30))
 
-    sig_data = [["Signature: ____________________", "Stamp: ____________________"]]
+    sig_data = [["Signature: _______", "Stamp: _______"]]
     sig_table = Table(sig_data, colWidths=[9*cm, 9*cm])
     sig_table.setStyle(TableStyle([('FONTSIZE', (0, 0), (-1, -1), 11)]))
     elements.append(sig_table)

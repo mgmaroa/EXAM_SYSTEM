@@ -10,12 +10,34 @@
 <div class="card-certificate">
   <div class="cc-header">
     <h2>Ready for Examination Cards</h2>
-    <span class="role-pill" style="color:var(--slate-muted); border-color:var(--rule);">
-      {{ approved_students|length }} student{{ approved_students|length|pluralize }}
+    <span class="role-pill" style="color:var(--text-muted); border-color:var(--rule);">
+      {{ total_approved }} total
     </span>
   </div>
+  <div class="cc-body" style="padding-bottom:0;">
+    <form method="get" id="search-form">
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
+        </svg>
+        <input type="search" name="q" id="search-input" value="{{ query }}"
+               placeholder="Search by student ID, name, or course"
+               autocomplete="off" aria-label="Search approved students">
+        {% if query %}
+          <a href="{% url 'registrar_dashboard' %}" class="search-clear">Clear</a>
+        {% endif %}
+      </div>
+    </form>
+    {% if query %}
+      <p class="search-summary">
+        {{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }} for
+        "<strong>{{ query }}</strong>"
+      </p>
+    {% endif %}
+  </div>
+
   <div class="cc-body" style="padding:0;">
-    {% if approved_students %}
+    {% if page_obj.object_list %}
       <div style="overflow-x:auto;">
         <table class="table-institutional">
           <thead>
@@ -30,12 +52,12 @@
             </tr>
           </thead>
           <tbody>
-            {% for student in approved_students %}
+            {% for student in page_obj.object_list %}
               <tr>
                 <td>{{ student.student_id }}</td>
                 <td>{{ student.user.get_full_name|default:student.user.username }}</td>
                 <td>{{ student.course }}</td>
-                <td>{{ student.fee_balance }}</td>
+                <td>{{ student.fee_balance}}</td>
                 <td>{{ student.date_approved|date:"d M Y" }}</td>
                 <td>{{ student.serial_number }}</td>
                 <td style="text-align:right;">
@@ -48,6 +70,46 @@
             {% endfor %}
           </tbody>
         </table>
+      </div>
+
+      {% if page_obj.paginator.num_pages > 1 %}
+        <div class="pagination">
+          <span class="pagination-info">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+          </span>
+          <div class="pagination-links">
+            {% if page_obj.has_previous %}
+              <a href="?page={{ page_obj.previous_page_number }}{% if query %}&amp;q={{ query|urlencode }}{% endif %}">&laquo; Prev</a>
+            {% else %}
+              <span class="is-disabled">&laquo; Prev</span>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+              {% if num == page_obj.number %}
+                <span class="is-current">{{ num }}</span>
+              {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+                <a href="?page={{ num }}{% if query %}&amp;q={{ query|urlencode }}{% endif %}">{{ num }}</a>
+              {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+              <a href="?page={{ page_obj.next_page_number }}{% if query %}&amp;q={{ query|urlencode }}{% endif %}">Next &raquo;</a>
+            {% else %}
+              <span class="is-disabled">Next &raquo;</span>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
+    {% elif query %}
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
+          </svg>
+        </div>
+        <p><strong>No matches for "{{ query }}"</strong></p>
+        <p>Check the spelling, or try searching by a different field (ID, name, or course).</p>
       </div>
     {% else %}
       <div class="empty-state">
@@ -63,4 +125,20 @@
     {% endif %}
   </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Progressive enhancement: auto-submit the search after a short pause in typing.
+  // The form works perfectly without this too (Enter key / no JS).
+  (function () {
+    var input = document.getElementById('search-input');
+    var form = document.getElementById('search-form');
+    var timer = null;
+    input.addEventListener('input', function () {
+      clearTimeout(timer);
+      timer = setTimeout(function () { form.submit(); }, 500);
+    });
+  })();
+</script>
 {% endblock %}
