@@ -137,3 +137,23 @@ LOGIN_URL = 'login'
 
 # Where to go after logging out
 LOGOUT_REDIRECT_URL = 'login'
+
+# --- Session expiry ---------------------------------------------------
+
+# Absolute cap: force re-login after 8 hours regardless of activity.
+SESSION_COOKIE_AGE = 8 * 60 * 60  # seconds
+
+# Best-effort: ask the browser to drop the session cookie on close.
+# Not fully reliable on its own (some browsers restore sessions on
+# relaunch) — the IdleTimeoutMiddleware is the piece that actually
+# enforces logout, this is just a second layer.
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# Refresh the session's expiry on every request, so SESSION_COOKIE_AGE
+# behaves like a rolling window tied to actual activity, not a fixed
+# clock from first login.
+SESSION_SAVE_EVERY_REQUEST = True
+
+# How long a user can be idle before IdleTimeoutMiddleware logs them out.
+# 30 minutes is a reasonable default for an admin-style portal — tune as needed.
+IDLE_TIMEOUT_SECONDS = 30 * 60
