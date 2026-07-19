@@ -157,4 +157,4 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 # How long a user can be idle before IdleTimeoutMiddleware logs them out.
 # 30 minutes is a reasonable default for an admin-style portal — tune as needed.
-IDLE_TIMEOUT_SECONDS = 30 * 60
+IDLE_TIMEOUT_SECONDS = 10 * 60

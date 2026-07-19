@@ -17,7 +17,7 @@ from django.contrib.auth import logout
 class IdleTimeoutMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
-        self.timeout_seconds = getattr(settings, 'IDLE_TIMEOUT_SECONDS', 30 * 60)
+        self.timeout_seconds = getattr(settings, 'IDLE_TIMEOUT_SECONDS', 10 * 60)
 
     def __call__(self, request):
         if request.user.is_authenticated:
